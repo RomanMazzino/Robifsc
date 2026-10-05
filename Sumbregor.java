@@ -1,3 +1,6 @@
+// teste 1234
+// quem leu eh gay
+
 package sumbregor;
 import robocode.*;
 //import java.awt.Color;
