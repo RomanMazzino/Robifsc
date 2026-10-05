@@ -11,11 +11,7 @@ import java.awt.Color;
 public class Sumbregor extends Robot
 {
 	public void run() {
-		setBodyColor(Color.black)
-		setGunColor(Color.black)
-		setRadarColor(Color.yellow)
-		setScanColor(Color.yellow)
-		setBulletColor(Color.yellow)
+        configurarCores();
 
 		// Robot main loop
 		while(true) {
@@ -26,6 +22,14 @@ public class Sumbregor extends Robot
 			turnGunRight(360);
 		}
 	}
+
+    private void configurarCores() {
+		setBodyColor(Color.black) // Base
+		setGunColor(Color.black) // Arma
+		setRadarColor(Color.yellow) // Radar
+		setScanColor(Color.yellow) // Scan
+		setBulletColor(Color.yellow) // Bala
+    }
 
 	/**
 	 * onScannedRobot: What to do when you see another robot
