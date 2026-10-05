@@ -1,5 +1,6 @@
 package sumbregor;
 import robocode.*;
+import java.awt.Color;
 
 /*
  * Filho Panzer VI, temido por todos os tanques, forjado na zona franca de Manus. 
@@ -10,16 +11,12 @@ import robocode.*;
 
 public class Sumbregor extends Robot
 {
-	/**
-	 * run: Sumbregor's default behavior
-	 */
 	public void run() {
-		// Initialization of the robot should be put here
-
-		// After trying out your robot, try uncommenting the import at the top,
-		// and the next line:
-
-		// setColors(Color.red,Color.blue,Color.green); // body,gun,radar
+		setBodyColor(Color.black)
+		setGunColor(Color.black)
+		setRadarColor(Color.yellow)
+		setScanColor(Color.yellow)
+		setBulletColor(Color.yellow)
 
 		// Robot main loop
 		while(true) {
