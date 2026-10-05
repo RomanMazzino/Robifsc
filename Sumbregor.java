@@ -1,15 +1,13 @@
-// teste 1234
-// quem leu eh gay
-
 package sumbregor;
 import robocode.*;
-//import java.awt.Color;
 
-// API help : https://robocode.sourceforge.io/docs/robocode/robocode/Robot.html
-
-/**
- * Sumbregor - a robot by (your name here)
+/*
+ * Filho Panzer VI, temido por todos os tanques, forjado na zona franca de Manus. 
+ * Sumbregor representa o último de sua espécie, preso num loop interminável de dor e sofrimento.
+ * Ele luta para conseguir o desejo de Sheilong e recuperar seu planeta, que foi explodido pelos temíveis
+ * e horrosos pavimentadores galáticos.
  */
+
 public class Sumbregor extends Robot
 {
 	/**
