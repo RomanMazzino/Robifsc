@@ -3,10 +3,9 @@ import robocode.*;
 import java.awt.Color;
 
 /*
- * Filho Panzer VI, temido por todos os tanques, forjado na zona franca de Manus. 
+ * Filho Panzer VI, temido por todos os tanques, forjado na zona franca de Manaus. 
  * Sumbregor representa o último de sua espécie, preso num loop interminável de dor e sofrimento.
- * Ele luta para conseguir o desejo de Sheilong e recuperar seu planeta, que foi explodido pelos temíveis
- * e horrosos pavimentadores galáticos.
+ * Ele luta para conseguir o desejo de Sheilong e recuperar seu planeta, que foi explodido pelos temíveis e horrosos pavimentadores galáticos.
  */
 
 public class Sumbregor extends Robot
