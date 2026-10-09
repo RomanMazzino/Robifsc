@@ -22,7 +22,11 @@ public class Sumbregor extends AdvancedRobot {
         setAdjustRadarForRobotTurn(true);
 
         while (true) {
-            turnRadarRightRadians(Double.POSITIVE_INFINITY); // Escaneamento contínuo
+            // Escaneamento contínuo assíncrono
+            setTurnRadarRightRadians(Double.POSITIVE_INFINITY); 
+            
+            // OBRIGATÓRIO em AdvancedRobots para executar os comandos "set"
+            execute(); 
         }
     }
 
@@ -33,6 +37,7 @@ public class Sumbregor extends AdvancedRobot {
         setScanColor(Color.yellow);
         setBulletColor(Color.yellow);
     }
+
     public void onScannedRobot(ScannedRobotEvent e) {
         // 1. Calcular a posição absoluta do inimigo na arena
         double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
@@ -76,10 +81,17 @@ public class Sumbregor extends AdvancedRobot {
     }
 
     public void onHitByBullet(HitByBulletEvent e) {
-        back(10);
+        // Fica de lado para o tiro (90 graus)
+        setTurnRight(e.getBearing() + 90); 
+        
+        // Randomiza uma distância de 50 a 200 para confundir o inimigo
+        double distanciaAleatoria = 50 + (Math.random() * 150);
+        
+        // Foge para trás 
+        setBack(distanciaAleatoria); 
     }
 
     public void onHitWall(HitWallEvent e) {
-        back(20);
+        setBack(20);
     }
 }
