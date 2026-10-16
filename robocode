@@ -1,0 +1,10 @@
+#!/bin/bash
+
+java -jar ./robocode.jar
+
+sed -i 's/\. \.\/set_java_options\.sh/\.\/set_java_options\.sh/g' '/home/aluno/robocode/robocode.sh'
+
+mkdir /home/aluno/robocode/robots/sumbregor
+ln -s "$(pwd)/Sumbregor.java" /home/aluno/robocode/robots/sumbregor/Sumbregor.java
+
+/home/aluno/robocode/robocode.sh
