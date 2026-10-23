@@ -5,28 +5,35 @@ import robocode.util.Utils;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-/*
- * Sumbregor Mendonça Román de Meneses, temido por todos os tanques, forjado na zona franca de Manaus. 
- * Sumbregor representa o último de sua espécie, preso num loop interminável de dor e sofrimento.
- * Ele luta para conseguir o desejo de Sheilong e recuperar seu planeta, que foi explodido pelos temíveis e horrorosos pavimentadores galáticos.
- */
+// Sumbregor Mendonça Román de Meneses, temido por todos os tanques,
+// forjado no calor e nas linhas de montagem da Zona Franca de Manaus.
+// 
+// Ele é o último de sua linhagem, condenado a reinar na arena em um ciclo
+// sem fim de batalhas. Cada disparo é um passo em direção ao desejo de
+// Shenlong para reconstruir seu planeta natal, devastado pelos tirânicos
+// Pavimentadores Galáticos.
 
 public class Sumbregor extends AdvancedRobot {
 
+    // Distância de segurança das paredes ao se posicionar nos cantos
     private static final double DISTANCIA_CANTO = 60.0;
     private Point2D.Double cantoAtual;
     
+    // Marcadores de tempo para gerenciar rotações e evitar que o robô fique estagnado
     private long ultimoAcertoTick = 0;
     private long tempoEntrouNoCanto = 0;
+    private long esquivandoAteTick = 0; // Prioriza o impulso de esquiva sobre a rotina de canto
     
-    private static final long MAX_TEMPO_SEM_ACERTO = 100; // Ticks sem acertar até mudar
-    private static final long MAX_TEMPO_NO_MESMO_CANTO = 150; // Ticks máximos no mesmo canto em combate
-    private int direcaoMovimento = 1; // Alterna entre frente e trás para não ficar parado
+    // Limites de tolerância (em ticks de jogo) antes de trocar de estratégia
+    private static final long MAX_TEMPO_SEM_ACERTO = 100;     // Ticks sem acertar nada
+    private static final long MAX_TEMPO_NO_MESMO_CANTO = 150; // Ticks parado na mesma região
+    
+    private int direcaoMovimento = 1; // Alterna entre frente (1) e ré (-1) ao oscilar
 
     public void run() {
-        configurarCores();
+        configurarEstetica();
 
-        // Desacopla as partes do robô para movimento fluido
+        // Independência total: corpo, canhão e radar giram livremente sem travar uns aos outros
         setAdjustGunForRobotTurn(true);
         setAdjustRadarForGunTurn(true);
         setAdjustRadarForRobotTurn(true);
@@ -34,12 +41,14 @@ public class Sumbregor extends AdvancedRobot {
         mudarParaProximoCanto();
 
         while (true) {
-            // 1. Movimentação até o canto ou oscilação defensiva se já chegou lá
-            irParaCantoEOscilar(cantoAtual);
-
             long tempoAtual = getTime();
 
-            // 2. Mudar de canto por Inatividade (se não acertar nada) OU por tempo excessivo estático no mesmo canto
+            // Só navega para o canto se não estiver no meio de uma manobra evasiva urgente
+            if (tempoAtual > esquivandoAteTick) {
+                irParaCantoEOscilar(cantoAtual);
+            }
+
+            // Se estiver sem acertar tiros ou há tempo demais na mesma posição, busca outro canto
             if ((tempoAtual - ultimoAcertoTick > MAX_TEMPO_SEM_ACERTO) || 
                 (tempoAtual - tempoEntrouNoCanto > MAX_TEMPO_NO_MESMO_CANTO)) {
                 
@@ -47,7 +56,7 @@ public class Sumbregor extends AdvancedRobot {
                 ultimoAcertoTick = tempoAtual;
             }
 
-            // 3. Caso perca o radar por algum motivo, faz busca ampla 360
+            // Se por algum motivo o radar travar ou perder o alvo, faz um giro completo para buscar alvos
             if (getRadarTurnRemaining() == 0.0) {
                 setTurnRadarRightRadians(Double.POSITIVE_INFINITY);
             }
@@ -56,7 +65,8 @@ public class Sumbregor extends AdvancedRobot {
         }
     }
 
-    private void configurarCores() {
+    // Aplica a identidade visual sombria do Sumbregor: blindagem preta com feixes amarelos.
+    private void configurarEstetica() {
         setBodyColor(Color.black);
         setGunColor(Color.black);
         setRadarColor(Color.yellow);
@@ -64,18 +74,18 @@ public class Sumbregor extends AdvancedRobot {
         setBulletColor(Color.yellow);
     }
 
-    // --- LÓGICA DE MOVIMENTAÇÃO DE CANTOS E OSCLILAÇÃO ---
-
+    // Seleciona aleatoriamente um dos quatro cantos da arena, garantindo que
+    // o robô nunca repita a posição onde já está.
     private void mudarParaProximoCanto() {
-        double w = getBattleFieldWidth();
-        double h = getBattleFieldHeight();
+        double largura = getBattleFieldWidth();
+        double altura = getBattleFieldHeight();
         double d = DISTANCIA_CANTO;
 
         Point2D.Double[] cantos = new Point2D.Double[] {
-            new Point2D.Double(d, d),         // Inferior Esquerdo
-            new Point2D.Double(w - d, d),     // Inferior Direito
-            new Point2D.Double(w - d, h - d), // Superior Direito
-            new Point2D.Double(d, h - d)      // Superior Esquerdo
+            new Point2D.Double(d, d),                     // Cantinho inferior esquerdo
+            new Point2D.Double(largura - d, d),           // Cantinho inferior direito
+            new Point2D.Double(largura - d, altura - d),  // Cantinho superior direito
+            new Point2D.Double(d, altura - d)             // Cantinho superior esquerdo
         };
 
         int novoIndice;
@@ -87,89 +97,124 @@ public class Sumbregor extends AdvancedRobot {
         tempoEntrouNoCanto = getTime();
     }
 
+    // Conduz o robô até o canto escolhido pela rota mais curta (frente ou ré).
+    // Quando atinge o destino, inicia uma oscilação curta para não virar um alvo fácil.
     private void irParaCantoEOscilar(Point2D.Double destino) {
-        double distance = Point2D.distance(getX(), getY(), destino.x, destino.y);
+        double distanciaAteDestino = Point2D.distance(getX(), getY(), destino.x, destino.y);
         
-        if (distance > 30) { 
-            // Ainda está a caminho do canto
-            double angleToTarget = Math.atan2(destino.x - getX(), destino.y - getY());
-            double targetHeading = Utils.normalRelativeAngle(angleToTarget - getHeadingRadians());
+        if (distanciaAteDestino > 30) { 
+            // Calcula o ângulo em direção ao ponto de destino
+            double anguloAbsoluto = Math.atan2(destino.x - getX(), destino.y - getY());
+            double anguloRelativo = Utils.normalRelativeAngle(anguloAbsoluto - getHeadingRadians());
             
-            if (Math.abs(targetHeading) > Math.PI / 2) {
-                targetHeading = Utils.normalRelativeAngle(targetHeading + Math.PI);
-                setTurnRightRadians(targetHeading);
-                setBack(distance);
+            // Avalia se é mais rápido ir de ré do que girar o tanque inteiro
+            if (Math.abs(anguloRelativo) > Math.PI / 2) {
+                anguloRelativo = Utils.normalRelativeAngle(anguloRelativo + Math.PI);
+                setTurnRightRadians(anguloRelativo);
+                setBack(distanciaAteDestino);
             } else {
-                setTurnRightRadians(targetHeading);
-                setAhead(distance);
+                setTurnRightRadians(anguloRelativo);
+                setAhead(distanciaAteDestino);
             }
         } else {
-            // Já chegou no canto: faz uma pequena oscilação/movimentação local para não ser alvo fácil
+            // Chegou ao canto: faz pequenos passos vaivém para dificultar a mira inimiga
             if (getDistanceRemaining() == 0) {
-                direcaoMovimento *= -1; // Inverte o sentido
+                direcaoMovimento = direcaoMovimento * -1;
                 setAhead((30 + Math.random() * 40) * direcaoMovimento);
             }
         }
     }
 
-    // --- EVENTOS DE MIRA, ESCANEMENTO E ESQUIVA ---
-
+    // Chamado sempre que o radar detecta um robô inimigo.
+    // Cuida da trava de radar, cálculo de trajetória do tiro e tomada de decisão de disparo.
     public void onScannedRobot(ScannedRobotEvent e) {
-        // 1. Radar Otimizado (Trava no inimigo sem escaneamento inútil de parede)
-        double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
-        double radarTurn = Utils.normalRelativeAngle(absoluteBearing - getRadarHeadingRadians());
-        double extraSweep = Math.toRadians(22) * Math.signum(radarTurn == 0 ? 1 : radarTurn);
-        setTurnRadarRightRadians(radarTurn + extraSweep);
-
-        // 2. Coordenadas do Inimigo
-        double enemyX = getX() + e.getDistance() * Math.sin(absoluteBearing);
-        double enemyY = getY() + e.getDistance() * Math.cos(absoluteBearing);
-        double enemyHeading = e.getHeadingRadians();
-        double enemyVelocity = e.getVelocity();
-
-        // 3. Poder e Velocidade da Bala
-        double bulletPower = Math.min(3.0, getEnergy());
-        double bulletVelocity = 20 - 3 * bulletPower;
-
-        // 4. Mira Preditiva
-        double predictedX = enemyX;
-        double predictedY = enemyY;
+        // --- 1. MANTÉM O RADAR CRAVADO NO INIMIGO ---
+        double anguloAbsolutoInimigo = getHeadingRadians() + e.getBearingRadians();
+        double giroRadar = Utils.normalRelativeAngle(anguloAbsolutoInimigo - getRadarHeadingRadians());
         
-        for (int i = 0; i < 5; i++) {
-            double distance = Point2D.distance(getX(), getY(), predictedX, predictedY);
-            double deltaTime = distance / bulletVelocity;
+        // Pequeno ajuste extra de 3 graus para garantir que o feixe de scan continue cobrindo o alvo
+        double margemExtra = Math.toRadians(3.0) * Math.signum(giroRadar == 0 ? 1 : giroRadar);
+        setTurnRadarRightRadians(giroRadar + margemExtra);
+
+        // --- 2. LOCALIZAÇÃO E TELEMETRIA DO ALVO ---
+        double inimigoX = getX() + e.getDistance() * Math.sin(anguloAbsolutoInimigo);
+        double inimigoY = getY() + e.getDistance() * Math.cos(anguloAbsolutoInimigo);
+        double direcaoInimigo = e.getHeadingRadians();
+        double velocidadeInimigo = e.getVelocity();
+
+        // --- 3. GERENCIAMENTO INTELIGENTE DE ENERGIA ---
+        // Quanto mais perto o inimigo, mais forte o tiro. Alvos distantes recebem tiros leves para economizar energia.
+        double distancia = e.getDistance();
+        double potenciaTiro;
+        
+        if (distancia < 150) {
+            potenciaTiro = 3.0;
+        } else if (distancia < 350) {
+            potenciaTiro = 2.0;
+        } else {
+            potenciaTiro = 1.0;
+        }
+        
+        // Proteção contra suicídio: nunca gasta mais energia do que possui
+        potenciaTiro = Math.min(potenciaTiro, getEnergy() - 0.1);
+        if (potenciaTiro < 0.1) potenciaTiro = 0.1;
+
+        // Fórmula oficial do Robocode: velocidade do projetil depende da sua potência
+        double velocidadeTiro = 20 - 3 * potenciaTiro;
+
+        // --- 4. MIRA PREDITIVA LINEAR ---
+        // Calcula onde o inimigo estará no momento em que a bala chegar até ele
+        double XPrevisto = inimigoX;
+        double YPrevisto = inimigoY;
+        
+        for (int i = 0; i < 7; i++) {
+            double distanciaAtePontoPrevisto = Point2D.distance(getX(), getY(), XPrevisto, YPrevisto);
+            double tempoAteImpacto = distanciaAtePontoPrevisto / velocidadeTiro;
             
-            predictedX = enemyX + Math.sin(enemyHeading) * enemyVelocity * deltaTime;
-            predictedY = enemyY + Math.cos(enemyHeading) * enemyVelocity * deltaTime;
+            XPrevisto = inimigoX + Math.sin(direcaoInimigo) * velocidadeInimigo * tempoAteImpacto;
+            YPrevisto = inimigoY + Math.cos(direcaoInimigo) * velocidadeInimigo * tempoAteImpacto;
         }
 
-        // Limites da arena
-        predictedX = Math.max(18.0, Math.min(getBattleFieldWidth() - 18.0, predictedX));
-        predictedY = Math.max(18.0, Math.min(getBattleFieldHeight() - 18.0, predictedY));
+        // Impede de mirar fora da arena (considera a largura de 18px do robô inimigo)
+        XPrevisto = Math.max(18.0, Math.min(getBattleFieldWidth() - 18.0, XPrevisto));
+        YPrevisto = Math.max(18.0, Math.min(getBattleFieldHeight() - 18.0, YPrevisto));
 
-        // 5. Ajuste do Canhão e Disparo
-        double aimAngle = Utils.normalAbsoluteAngle(Math.atan2(predictedX - getX(), predictedY - getY()));
-        setTurnGunRightRadians(Utils.normalRelativeAngle(aimAngle - getGunHeadingRadians()));
+        // --- 5. ALINHAMENTO DO CANHÃO E DISPARO ---
+        double anguloParaAtirar = Utils.normalAbsoluteAngle(Math.atan2(XPrevisto - getX(), YPrevisto - getY()));
+        double giroCanhao = Utils.normalRelativeAngle(anguloParaAtirar - getGunHeadingRadians());
+        
+        setTurnGunRightRadians(giroCanhao);
 
-        if (getGunHeat() == 0 && Math.abs(getGunTurnRemaining()) < 1) {
-            setFire(bulletPower);
+        // Só dispara se o canhão estiver frio e alinhado (tolerância de no máximo 1.5 graus de erro)
+        boolean canhaoFrio = getGunHeat() == 0;
+        boolean canhaoAlinhado = Math.abs(getGunTurnRemainingRadians()) < Math.toRadians(1.5);
+        boolean energiaSuficiente = getEnergy() > 0.2;
+
+        if (canhaoFrio && canhaoAlinhado && energiaSuficiente) {
+            setFire(potenciaTiro);
         }
     }
 
+    // Registra o momento em que um projetil atinge o inimigo para resetar o temporizador de inatividade.
     public void onBulletHit(BulletHitEvent e) {
-        // Atualiza a marca temporal de acerto
         ultimoAcertoTick = getTime();
     }
 
+    // Resposta tática ao levar um tiro: cancela temporariamente o movimento em direção ao canto
+    // e executa uma manobra evasiva perpendicular ao ângulo do projetil.
     public void onHitByBullet(HitByBulletEvent e) {
-        // Restaurada a esquiva original com variação aleatória de recuo
-        setTurnRight(e.getBearing() + 90);
-        double distanciaAleatoria = 50 + (Math.random() * 150);
-        setBack(distanciaAleatoria);
+        double anguloEsquiva = Utils.normalRelativeAngle(e.getBearingRadians() + (Math.PI / 2));
+        setTurnRightRadians(anguloEsquiva);
+        
+        double arrancadaEvasiva = 80 + (Math.random() * 80);
+        setBack(arrancadaEvasiva);
+
+        // Garante 12 ticks de imunidade contra a rotina do canto para completar o impulso de esquiva
+        esquivandoAteTick = getTime() + 12; 
     }
 
+    // Se colidir com a parede (por exemplo, ao desviar de um tiro), força a troca imediata de canto.
     public void onHitWall(HitWallEvent e) {
-        // Se bater na parede ao esquivar, força a ida para outro canto imediatamente
         mudarParaProximoCanto();
     }
 }
