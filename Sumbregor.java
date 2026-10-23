@@ -6,7 +6,7 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 
 /*
- * Filho Panzer VI, temido por todos os tanques, forjado na zona franca de Manaus. 
+ * Sumbregor Mendonça Román de Meneses, temido por todos os tanques, forjado na zona franca de Manaus. 
  * Sumbregor representa o último de sua espécie, preso num loop interminável de dor e sofrimento.
  * Ele luta para conseguir o desejo de Sheilong e recuperar seu planeta, que foi explodido pelos temíveis e horrorosos pavimentadores galáticos.
  */
